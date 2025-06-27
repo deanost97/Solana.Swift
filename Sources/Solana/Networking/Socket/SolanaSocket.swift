@@ -1,3 +1,5 @@
+// Full updated SolanaSocket.swift — Compatible with Starscream v4+
+
 import Starscream
 import Foundation
 
@@ -5,6 +7,7 @@ enum SolanaSocketError: Error {
     case disconnected
     case couldNotSerialize
 }
+
 public protocol SolanaSocketEventsDelegate: AnyObject {
     func connected()
     func accountNotification(notification: Response<BufferInfo<AccountInfo>>)
@@ -15,19 +18,6 @@ public protocol SolanaSocketEventsDelegate: AnyObject {
     func subscribed(socketId: UInt64, id: String)
     func disconnected(reason: String, code: UInt16)
     func error(error: Error?)
-}
-
-public protocol SolanaWebSocketEvents: AnyObject {
-    func connected(_: [String: String])
-    func disconnected(_: String, _: UInt16)
-    func text(_: String)
-    func binary(_: Data)
-    func pong(_: Data?)
-    func ping(_: Data?)
-    func error(_: Error?)
-    func viabilityChanged(_: Bool)
-    func reconnectSuggested(_: Bool)
-    func cancelled()
 }
 
 public class SolanaSocket {
@@ -56,7 +46,7 @@ public class SolanaSocket {
 
     public func accountSubscribe(publickey: String) -> Result<String, Error> {
         let method: SocketMethod = .accountSubscribe
-        let params: [Encodable] = [ publickey, ["commitment": "recent", "encoding": "base64"] ]
+        let params: [Encodable] = [publickey, ["commitment": "recent", "encoding": "base64"]]
         let request = SolanaRequest(method: method.rawValue, params: params)
         return writeToSocket(request: request)
     }
@@ -118,17 +108,22 @@ public class SolanaSocket {
     }
 
     private func writeToSocket(request: SolanaRequest) -> Result<String, Error> {
-        guard let jsonData = try? JSONEncoder().encode(request) else { return Result.failure(SolanaSocketError.couldNotSerialize) }
-        guard let socket = socket else { return Result.failure(SolanaSocketError.disconnected) }
+        guard let jsonData = try? JSONEncoder().encode(request) else {
+            return .failure(SolanaSocketError.couldNotSerialize)
+        }
+        guard let socket = socket else {
+            return .failure(SolanaSocketError.disconnected)
+        }
         socket.write(data: jsonData)
-        return Result.success(request.id)
+        return .success(request.id)
     }
 }
 
+// ✅ FIXED DELEGATE FOR STARSCREAM 4+
 extension SolanaSocket: WebSocketDelegate {
-
     public func didReceive(event: WebSocketEvent, client: WebSocket) {
         log(event: event)
+
         switch event {
         case .connected:
             delegate?.connected()
@@ -136,50 +131,60 @@ extension SolanaSocket: WebSocketDelegate {
             delegate?.disconnected(reason: reason, code: code)
         case .text(let string):
             onText(string: string)
-        case .binary: break
-        case .ping: break
-        case .pong: break
-        case .viabilityChanged: break
-        case .reconnectSuggested: break
-        case .cancelled: break
-        case .error(let error): break
-            self.delegate?.error(error: error)
+        case .binary:
+            break
+        case .ping:
+            break
+        case .pong:
+            break
+        case .viabilityChanged:
+            break
+        case .reconnectSuggested:
+            break
+        case .cancelled:
+            break
+        case .error(let error):
+            delegate?.error(error: error)
+        @unknown default:
+            break
         }
     }
 
     private func log(event: WebSocketEvent) {
+        guard enableDebugLogs else { return }
+
         switch event {
         case .connected(let headers):
-            if enableDebugLogs { debugPrint("conected with headers \(headers)") }
+            debugPrint("connected with headers: \(headers)")
         case .disconnected(let reason, let code):
-            if enableDebugLogs { debugPrint("disconnected with reason \(reason) \(code)") }
+            debugPrint("disconnected with reason: \(reason), code: \(code)")
         case .text(let string):
-            if enableDebugLogs { debugPrint("text \(string)") }
+            debugPrint("received text: \(string)")
         case .binary:
-            if enableDebugLogs { debugPrint("binary") }
+            debugPrint("received binary")
         case .ping:
-            if enableDebugLogs { debugPrint("ping") }
+            debugPrint("ping received")
         case .pong:
-            if enableDebugLogs { debugPrint("pong") }
-        case .viabilityChanged(let visible):
-            if enableDebugLogs { debugPrint("viabilityChanged \(visible)") }
-        case .reconnectSuggested(let reconnect):
-            if enableDebugLogs { debugPrint("reconnectSuggested \(reconnect)") }
+            debugPrint("pong received")
+        case .viabilityChanged(let isViable):
+            debugPrint("viabilityChanged: \(isViable)")
+        case .reconnectSuggested(let shouldReconnect):
+            debugPrint("reconnectSuggested: \(shouldReconnect)")
         case .cancelled:
-            if enableDebugLogs { debugPrint("cancelled") }
+            debugPrint("cancelled")
         case .error(let error):
-            if enableDebugLogs { debugPrint("error \(error?.localizedDescription ?? "")") }
+            debugPrint("error: \(error?.localizedDescription ?? "unknown")")
+        @unknown default:
+            debugPrint("unknown websocket event")
         }
     }
 
     private func onText(string: String) {
         guard let data = string.data(using: .utf8) else { return }
         do {
-            // TODO: Fix this mess code
             let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
             if let jsonType = jsonResponse["method"] as? String,
                let type = SocketMethod(rawValue: jsonType) {
-
                 switch type {
                 case .accountNotification:
                     let notification = try JSONDecoder().decode(Response<BufferInfo<AccountInfo>>.self, from: data)
@@ -195,7 +200,6 @@ extension SolanaSocket: WebSocketDelegate {
                     delegate?.programNotification(notification: notification)
                 default: break
                 }
-
             } else {
                 if let subscription = try? JSONDecoder().decode(Response<UInt64>.self, from: data),
                    let socketId = subscription.result,
@@ -213,5 +217,4 @@ extension SolanaSocket: WebSocketDelegate {
             delegate?.error(error: error)
         }
     }
-
 }
