@@ -6,8 +6,8 @@
         "repositoryURL": "https://github.com/metaplex-foundation/beet-swift.git",
         "state": {
           "branch": null,
-          "revision": "05657fa3511b8b72ea8da77745373215445c9885",
-          "version": "1.0.2"
+          "revision": "e4708bf28b55ce42727006c1cb7882f069d07bd8",
+          "version": "1.0.7"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/daltoniam/Starscream.git",
         "state": {
           "branch": null,
-          "revision": "df8d82047f6654d8e4b655d1b1525c64e1059d21",
-          "version": "4.0.4"
+          "revision": "c6bfd1af48efcc9a9ad203665db12375ba6b145a",
+          "version": "4.0.8"
         }
       },
       {
@@ -33,7 +33,16 @@
         "repositoryURL": "https://github.com/apple/swift-docc-plugin",
         "state": {
           "branch": null,
-          "revision": "3303b164430d9a7055ba484c8ead67a52f7b74f6",
+          "revision": "d1691545d53581400b1de9b0472d45eb25c19fed",
+          "version": "1.4.4"
+        }
+      },
+      {
+        "package": "SymbolKit",
+        "repositoryURL": "https://github.com/swiftlang/swift-docc-symbolkit",
+        "state": {
+          "branch": null,
+          "revision": "b45d1f2ed151d057b54504d653e0da5552844e34",
           "version": "1.0.0"
         }
       },
