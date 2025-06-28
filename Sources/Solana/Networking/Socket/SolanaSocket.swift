@@ -122,7 +122,10 @@ public class SolanaSocket {
 // MARK: - WebSocketDelegate conformance (Starscream v4)
 
 extension SolanaSocket: WebSocketDelegate {
-    public func didReceive(event: WebSocketEvent, client: WebSocketClient) {
+    public func didReceive(event: Starscream.WebSocketEvent, client: any Starscream.WebSocketClient) {
+    }
+    
+    public func didReceive(event: WebSocketEvent, client: WebSocket) {
         log(event: event)
 
         switch event {
@@ -150,12 +153,8 @@ extension SolanaSocket: WebSocketDelegate {
             break
         }
     }
-}
 
-// MARK: - Private helpers
-
-private extension SolanaSocket {
-    func log(event: WebSocketEvent) {
+    private func log(event: WebSocketEvent) {
         guard enableDebugLogs else { return }
 
         switch event {
@@ -184,7 +183,7 @@ private extension SolanaSocket {
         }
     }
 
-    func onText(string: String) {
+    private func onText(string: String) {
         guard let data = string.data(using: .utf8) else { return }
         do {
             let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as! [String: Any]
@@ -223,4 +222,3 @@ private extension SolanaSocket {
         }
     }
 }
-
