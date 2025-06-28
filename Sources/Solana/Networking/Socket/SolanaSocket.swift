@@ -120,24 +120,62 @@ public class SolanaSocket {
 }
 
 extension SolanaSocket: WebSocketDelegate {
-    public func didReceive(event: Starscream.WebSocketEvent, client: any Starscream.WebSocketClient) {
-        <#code#>
-    }
-    
-    public func websocketDidConnect(socket: WebSocketClient) {
-        delegate?.connected()
+    public func didReceive(event: WebSocketEvent, client: WebSocket) {
+        log(event: event)
+
+        switch event {
+        case .connected:
+            delegate?.connected()
+        case .disconnected(let reason, let code):
+            delegate?.disconnected(reason: reason, code: code)
+        case .text(let string):
+            onText(string: string)
+        case .binary:
+            break
+        case .ping:
+            break
+        case .pong:
+            break
+        case .viabilityChanged:
+            break
+        case .reconnectSuggested:
+            break
+        case .cancelled:
+            break
+        case .error(let error):
+            delegate?.error(error: error)
+        @unknown default:
+            break
+        }
     }
 
-    public func websocketDidDisconnect(socket: WebSocketClient, error: Error?) {
-        delegate?.disconnected(reason: error?.localizedDescription ?? "Unknown", code: 1000)
-    }
+    private func log(event: WebSocketEvent) {
+        guard enableDebugLogs else { return }
 
-    public func websocketDidReceiveMessage(socket: WebSocketClient, text: String) {
-        onText(string: text)
-    }
-
-    public func websocketDidReceiveData(socket: WebSocketClient, data: Data) {
-        // No binary data used in current logic
+        switch event {
+        case .connected(let headers):
+            debugPrint("connected with headers: \(headers)")
+        case .disconnected(let reason, let code):
+            debugPrint("disconnected with reason: \(reason), code: \(code)")
+        case .text(let string):
+            debugPrint("received text: \(string)")
+        case .binary:
+            debugPrint("received binary")
+        case .ping:
+            debugPrint("ping received")
+        case .pong:
+            debugPrint("pong received")
+        case .viabilityChanged(let isViable):
+            debugPrint("viabilityChanged: \(isViable)")
+        case .reconnectSuggested(let shouldReconnect):
+            debugPrint("reconnectSuggested: \(shouldReconnect)")
+        case .cancelled:
+            debugPrint("cancelled")
+        case .error(let error):
+            debugPrint("error: \(error?.localizedDescription ?? "unknown")")
+        @unknown default:
+            debugPrint("unknown websocket event")
+        }
     }
 
     private func onText(string: String) {
@@ -159,8 +197,7 @@ extension SolanaSocket: WebSocketDelegate {
                 case .programNotification:
                     let notification = try JSONDecoder().decode(Response<ProgramAccount<AccountInfo>>.self, from: data)
                     delegate?.programNotification(notification: notification)
-                default:
-                    break
+                default: break
                 }
             } else {
                 if let subscription = try? JSONDecoder().decode(Response<UInt64>.self, from: data),
