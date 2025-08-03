@@ -19,17 +19,18 @@ let package = Package(
         .package(name: "Beet", url: "https://github.com/metaplex-foundation/beet-swift.git", from: "1.0.2"),
         .package(name: "secp256k1", url: "https://github.com/Boilertalk/secp256k1.swift.git", from: "0.1.7"),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+        .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.0.0"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "Solana",
-            dependencies: ["TweetNacl", "Starscream", "secp256k1", "Beet"]
+            dependencies: ["TweetNacl", "Starscream", "secp256k1", "Beet", "Alamofire"]
         ),
         .testTarget(
             name: "SolanaTests",
-            dependencies: ["Solana", "TweetNacl", "Starscream", "secp256k1", "Beet"],
+            dependencies: ["Solana", "TweetNacl", "Starscream", "secp256k1", "Beet", "Alamofire"],
             resources: [.copy("Resources/Mocks")]
         )
     ]
